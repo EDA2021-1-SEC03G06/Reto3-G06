@@ -25,34 +25,56 @@ import sys
 import controller
 from DISClib.ADT import list as lt
 assert cf
-
-
-"""
-La vista se encarga de la interacción con el usuario
-Presenta el menu de opciones y por cada seleccion
-se hace la solicitud al controlador para ejecutar la
-operación solicitada
-"""
-
 def printMenu():
     print("Bienvenido")
-    print("1- Cargar información en el catálogo")
-    print("2- ")
+    print("1-Inicializar catalogo")
+    print("2- Cargar información en el catálogo")
+    print("3- Requerimiento 1: Caracterizar las reproducciones ")
+    print("4- Requerimiento 2: Encontrar musica para festejar")
+    print("5- Requerimiento 3: Encontrar musica para estudiar")
+    print("6- Requerimiento 4: Estudiar los generos musicales")
+    print("7- Requerimiento 5: Indicar el genero musical más escuchado en el tiempo")
 
 catalog = None
 
 """
 Menu principal
 """
+diccionario=None
 while True:
     printMenu()
     inputs = input('Seleccione una opción para continuar\n')
     if int(inputs[0]) == 1:
-        print("Cargando información de los archivos ....")
-
+        print("Inicializar catalogo")
+        diccionario=controller.initialize()
+        
     elif int(inputs[0]) == 2:
-        pass
+        print("Cargando información en el catalogo.............")
+        controller.loadData(diccionario)
+        print("datos cargados correctamente")
 
+        for i in range(1,6):
+            video=lt.getElement(diccionario['audio-events'],i)
+            print(i," : ",video)
+        size=lt.size(diccionario['audio-events'])
+        for i in range(size-5,size+1):
+            video=lt.getElement(diccionario['audio-events'],i)
+            print(i," :" ,video)
+        print("Se han cargado un total de : ", controller.events_size(diccionario), " eventos de escucha")
+        print(" Total de Autores : ", controller.artists_size(diccionario))
+        print(" Total de canciones: ", controller.songs_size(diccionario))
+    elif int(inputs[0])==3:
+        caracteristica=input("indique la caracteristica de contenido")
+        minm=(input("Indique el valor minimo"))
+        maxm=(input("Indique el valor maximo"))
+        lista=controller.requerimiento1(diccionario,caracteristica,minm,maxm)
+        print("Cantidad total de eventos de escucha : " ,lista)
+    elif int(inputs[0])==4:
+        pass
+    elif int(inputs[0])==5:
+        pass
+    elif int(inputs[0])==6:
+        print("XD")
     else:
         sys.exit(0)
 sys.exit(0)
