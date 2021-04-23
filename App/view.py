@@ -68,9 +68,15 @@ while True:
         minm=(input("Indique el valor minimo"))
         maxm=(input("Indique el valor maximo"))
         lista=controller.requerimiento1(diccionario,caracteristica,minm,maxm)
-        print("Cantidad total de eventos de escucha : " ,lista)
+        print("Cantidad total de eventos de escucha : " ,  lista[0])
+        print("Cantidad total de artistas: " ,lista[1])
     elif int(inputs[0])==4:
-        pass
+        e1=float(input("Escriba el rango minimo para energía: "))
+        e2=float(input("Escriba el rango maximo para energía: "))
+        d1=float(input("Escriba el rango minimo para danceabilidad: "))
+        d2=float(input("Escriba el rango maximo para danceabilidad: "))
+        lista=controller.requerimiento2(diccionario,e1,e2,d1,d2)
+        print(" La cantidad de canciones que cumnplene estas condiciones son : " ,lista[0])    
     elif int(inputs[0])==5:
         pass
     elif int(inputs[0])==6:
