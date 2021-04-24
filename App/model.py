@@ -47,7 +47,8 @@ def initialize():
         'songs':None,
         'user-events':None,
         'energy':None,
-        'danceability':None
+        'danceability':None,
+        'tempo':None
     }
     diccionario["audio-events"]=lt.newList("ARRAY_LIST")
     diccionario["artists"]=om.newMap(omaptype='RBT',comparefunction=compareByArtistid)
@@ -55,6 +56,9 @@ def initialize():
     diccionario['user-events']=lt.newList('ARRAY_LIST')
     diccionario['energy']=om.newMap(omaptype='RBT',comparefunction=compareByFeature)
     diccionario['danceability']=om.newMap(omaptype='RBT',comparefunction=compareByFeature)
+    diccionario['tempo']=mp.newMap(numelements=10,maptype='CHAINING',loadfactor=1.0)
+    
+    create_tempo(diccionario)
     return diccionario
 
 # Funciones para agregar informacion al catalogo
@@ -62,11 +66,40 @@ def add_audio_event(diccionario,audio_event):
     lt.addLast(diccionario["audio-events"],audio_event)
     update_artist(diccionario,audio_event)
     update_song(diccionario,audio_event)
-    update_energy(diccionario,audio_event)
+    update_danceability(diccionario,audio_event)
+    update_tempo(diccionario,audio_event)
+    
     
 def add_user_event(diccionario,audio_event):
     lt.addLast(diccionario['user-events'],audio_event)
 # Funciones para creacion de datos
+def create_tempo(diccionario):
+    
+    mp.put(diccionario['tempo'],'reggae',create_category(60,90))
+    mp.put(diccionario['tempo'],'down-tempo',create_category(70,100))
+    mp.put(diccionario['tempo'],'chill-out',create_category(90,120))
+    mp.put(diccionario['tempo'],'hip-hop',create_category(85,115))
+    mp.put(diccionario['tempo'],'jazz and funk',create_category(120,125))
+    mp.put(diccionario['tempo'],'pop',create_category(100,130))
+    mp.put(diccionario['tempo'],'r&b',create_category(60,80))
+    mp.put(diccionario['tempo'],'rock',create_category(110,140))
+    mp.put(diccionario['tempo'],'metal',create_category(100,160))
+   
+    
+def create_category(min,max):
+    diccionario=mp.newMap(2,maptype='CHAINING',loadfactor=1.0)
+    lista=lt.newList(datastructure='ARRAY_LIST')
+    listrango=lt.newList(datastructure='ARRAY_LIST')
+
+    lt.addFirst(listrango,min)
+    lt.addLast(listrango,max)
+
+    mp.put(diccionario,'events',lista)
+    mp.put(diccionario,'range',listrango)
+
+    return diccionario
+
+
 
 def update_artist(diccionario,audio_event):
     id=audio_event['artist_id']
@@ -83,13 +116,13 @@ def update_song(diccionario,audio_event):
         create_song(diccionario,audio_event)
     else:
         insert_song(diccionario,audio_event)
-def update_energy(diccionario,audio_event):
-    id=audio_event['energy']
-    p=om.contains(diccionario['energy'],id)
+def update_danceability(diccionario,audio_event):
+    id=audio_event['danceability']
+    p=om.contains(diccionario['danceability'],id)
     if not p:
-        create_energy(diccionario,audio_event)
+        create_danceability(diccionario,audio_event)
     else:
-        insert_energy(diccionario,audio_event)
+        insert_danceability(diccionario,audio_event)
 def create_artist(diccionario,audio_event):
     lista=lt.newList(datastructure='ARRAY_LIST')
     lt.addLast(lista,audio_event)
@@ -112,16 +145,36 @@ def insert_song(diccionario,audio_event):
     lt.addLast(lista,audio_event)
     om.put(diccionario['songs'],audio_event['track_id'],lista)
 
-def create_energy(diccionario,audio_event):
+def create_danceability(diccionario,audio_event):
     lista=lt.newList(datastructure='ARRAY_LIST')
     lt.addLast(lista,audio_event)
-    om.put(diccionario['energy'],audio_event['energy'],lista)
+    om.put(diccionario['danceability'],audio_event['danceability'],lista)
 
-def insert_energy(diccionario,audio_event):
-    couple=om.get(diccionario['energy'],audio_event['energy'])
+def insert_danceability(diccionario,audio_event):
+    couple=om.get(diccionario['danceability'],audio_event['danceability'])
     lista=me.getValue(couple)
     lt.addLast(lista,audio_event)
-    om.put(diccionario['energy'],audio_event['energy'],lista)
+    om.put(diccionario['danceability'],audio_event['danceability'],lista)
+def update_tempo(diccionario,audio_event):
+    lista=mp.keySet(diccionario['tempo'])
+
+    for feature in lt.iterator(lista):
+        couple=mp.get(diccionario['tempo'],feature)
+        p=me.getValue(couple)
+
+        couple2=mp.get(p,'range')
+        values=me.getValue(couple2)
+
+        couple3=mp.get(p,'events')
+        lista=me.getValue(couple3)
+
+        minimo=lt.firstElement(values)
+        maximo=lt.lastElement(values)
+        if minimo<=float(audio_event['tempo'])<=maximo:
+            lt.addLast(lista,audio_event)
+        
+        mp.put(p,'events',lista)
+        mp.put(diccionario['tempo'],feature,p)
 """
 def create_danceability(diccionario,audio_event):
     lista=lt.newList(datastructure='ARRAY_LIST')
@@ -154,7 +207,7 @@ def compareBySongId(song1,song2):
     else:
         return -1
 def compareByArtistidBinary(artist1,artist2):
-    return artist1.lower()>artist2.lower()
+    return artist1['artist_id'].lower()>artist2['artist_id'].lower()
 def compareByArtistid(artist1,artist2):
     e1=artist1.lower()
     e2=artist2.lower()
@@ -203,7 +256,7 @@ def requerimiento1(diccionario,feature,minm,maxm):
     for lista in lt.iterator(values):                   
         total+=lt.size(lista)                       #se cuenta el tamaño de la lista de cada nodo
         for evento in lt.iterator(lista):
-            lt.addLast(artistas,evento['artist_id'])        #se añade a una lista los artistas de cada uno de los eventos
+            lt.addLast(artistas,evento)        #se añade a una lista los artistas de cada uno de los eventos
     
     artistas_ordenados=ms.sort(artistas,compareByArtistidBinary)        #estos artistas son ordenados, de tal manera que los mismos artistas queden consecutivos
     
@@ -211,7 +264,7 @@ def requerimiento1(diccionario,feature,minm,maxm):
     lt.addLast(artistas_final,lt.firstElement(artistas_ordenados))
 
     for evento in lt.iterator(artistas_ordenados):      #el bucle sirve para añadir a una nueva lista cada uno de los artistas a lo sumo una vez
-        if evento!=lt.lastElement(artistas_final):
+        if evento['artist_id']!=lt.lastElement(artistas_final)['artist_id']:
             lt.addLast(artistas_final,evento)
     size=lt.size(artistas_final)
 
@@ -223,7 +276,7 @@ def requerimiento2(diccionario,mine,maxe,mind,maxd):
     maxe=float(maxe)
     mind=float(mind)
     maxd=float(maxd)
-    values=om.values(diccionario['energy'],mine,maxe)
+    values=om.values(diccionario['danceability'],mind,maxd)
     
     lista_total=lt.newList(datastructure='ARRAY_LIST')
 
@@ -233,7 +286,7 @@ def requerimiento2(diccionario,mine,maxe,mind,maxd):
     for lista in lt.iterator(values):
         suma+=lt.size(lista)
         for evento in lt.iterator(lista):
-            if mind<=float(evento['danceability'])<=maxd :
+            if mine<=float(evento['energy'])<=maxe :
                 lt.addLast(lista_total,evento)
     #print(suma)
     #print(lt.size(lista_total))
@@ -244,7 +297,7 @@ def requerimiento2(diccionario,mine,maxe,mind,maxd):
     
     lista_final=lt.newList(datastructure='ARRAY_LIST')
     
-    lt.addLast(lista_final,lt.lastElement(lista_total))
+    lt.addLast(lista_final,lt.firstElement(lista_total))
     iterador3=li.newIterator(ordenada)
 
     while li.hasNext(iterador3):
@@ -257,4 +310,31 @@ def requerimiento2(diccionario,mine,maxe,mind,maxd):
     return size, lista_final
 
 
-def requerimiento4():
+def requerimiento4(diccionario,lista):
+    total=lt.newList(datastructure='ARRAY_LIST')
+    numeroartistas=lt.newList(datastructure='ARRAY_LIST')
+    lista_artistas=lt.newList(datastructure='ARRAY_LIST')
+
+    for categorias in lista:
+        couple=mp.get(diccionario['tempo'], categorias)         #Se obtiene la tabla de hash cuyo 
+        categoria=me.getValue(couple)
+        
+        couple2=mp.get(categoria,'events')
+        eventos=me.getValue(couple2)
+        size=lt.size(eventos)
+        lt.addLast(total,size)
+
+        artistas_ordenados=ms.sort(eventos,compareByArtistidBinary)        #estos artistas son ordenados, de tal manera que los mismos artistas queden consecutivos
+    
+        artistas_final=lt.newList(datastructure='ARRAY_LIST')
+        lt.addLast(artistas_final,lt.firstElement(artistas_ordenados))
+
+        for evento in lt.iterator(artistas_ordenados):      #el bucle sirve para añadir a una nueva lista cada uno de los artistas a lo sumo una vez
+            if evento['artist_id']!=lt.lastElement(artistas_final)['artist_id']:
+                lt.addLast(artistas_final,evento)
+        size=lt.size(artistas_final)
+        lt.addLast(numeroartistas,size)
+        lt.addLast(lista_artistas,artistas_final)
+        
+    return total,numeroartistas,lista_artistas
+    

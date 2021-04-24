@@ -24,6 +24,7 @@ import config as cf
 import sys
 import controller
 from DISClib.ADT import list as lt
+import random
 assert cf
 def printMenu():
     print("Bienvenido")
@@ -34,6 +35,18 @@ def printMenu():
     print("5- Requerimiento 3: Encontrar musica para estudiar")
     print("6- Requerimiento 4: Estudiar los generos musicales")
     print("7- Requerimiento 5: Indicar el genero musical más escuchado en el tiempo")
+
+def mostrar_categorias():
+    print("1-Reggae")
+    print("2-Down-Tempo")
+    print("3-Chill-out")
+    print("4-Hip-hop")
+    print("5-Jazz and Funk")
+    print("6-Pop")
+    print("7-R&B")
+    print("8-Rock")
+    print("9-Metal")
+    print("10-Ninguna opciòn adicional")
 
 catalog = None
 
@@ -77,10 +90,44 @@ while True:
         d2=float(input("Escriba el rango maximo para danceabilidad: "))
         lista=controller.requerimiento2(diccionario,e1,e2,d1,d2)
         print(" La cantidad de canciones que cumnplene estas condiciones son : " ,lista[0])    
+
+        for i in range(1,6):
+            numero=random.randint(1,lt.size(lista[1]))
+            evento=lt.getElement(lista[1],numero)
+            print("Track",i," : ",evento['artist_id'], " with energy ", evento['energy']," and danceability : ", evento['danceability'] )
+
+        
     elif int(inputs[0])==5:
-        pass
+       pass
+
+            
     elif int(inputs[0])==6:
-        print("XD")
+        lista=["reggae","down-tempo","chill-out","hip-hop","jazz and funk","pop","r&b","rock","metal"]
+        salida=[]
+        print("De cual de las siguientes categorias quiere conocer la cantidad reproducciones : ")
+        bandera=True
+        while bandera:
+            mostrar_categorias()
+            p=int(input())
+            if p==10:
+                bandera=False
+            elif p<10:
+                salida.append(lista[p-1])
+        print("Cargando")
+                
+        variables=controller.requerimiento4(diccionario,salida)
+
+        size=len(salida)
+
+        for i in range(size):
+            print(" Para la categoria  ", salida[i], " se obtuvieron: ", lt.getElement(variables[0],i+1), "reproducciones ")
+            print(" Con ",lt.getElement(variables[1],i+1)," artistas")
+            lista=lt.getElement(variables[2],i+1)
+            tamaño_lista=lt.size(lista)
+            for j in range(1,11):
+                numero=random.randint(1,tamaño_lista)
+                print("Artist",j," : ", lt.getElement(lista,numero)['artist_id'])
+        
     else:
         sys.exit(0)
 sys.exit(0)

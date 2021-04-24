@@ -105,7 +105,9 @@ def loadUserTrack(diccionario):
 def requerimiento1(diccionario,caracteristica,minm,maxm):
     return model.requerimiento1(diccionario,caracteristica,minm,maxm)
 def requerimiento2(diccionario,e1,e2,d1,d2):
-    return model.requerimiento2(diccionario,e1,e2,d1,e2)
+    return model.requerimiento2(diccionario,e1,e2,d1,d2)
+def requerimiento4(diccionario,lista):
+    return model.requerimiento4(diccionario,lista)
 # Funciones de consulta sobre el catálogo
 def events_size(diccionario):
     return model.events_size(diccionario)
