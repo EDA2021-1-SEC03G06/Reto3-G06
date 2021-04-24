@@ -103,11 +103,54 @@ def loadUserTrack(diccionario):
 
 # Funciones de ordenamiento
 def requerimiento1(diccionario,caracteristica,minm,maxm):
-    return model.requerimiento1(diccionario,caracteristica,minm,maxm)
+    delta_time = -1.0
+    delta_memory = -1.0
+
+    tracemalloc.start()
+
+    start_time = getTime()
+    start_memory = getMemory()
+    requerimiento1=model.requerimiento1(diccionario,caracteristica,minm,maxm)
+    stop_memory = getMemory()
+    stop_time = getTime()
+    tracemalloc.stop()
+
+    delta_time = stop_time - start_time
+    delta_memory = deltaMemory(start_memory, stop_memory)
+    return delta_time,delta_memory,requerimiento1
 def requerimiento2(diccionario,e1,e2,d1,d2):
-    return model.requerimiento2(diccionario,e1,e2,d1,d2)
+    delta_time = -1.0
+    delta_memory = -1.0
+
+    tracemalloc.start()
+
+    start_time = getTime()
+    start_memory = getMemory()
+
+    requerimiento2=model.requerimiento2(diccionario,e1,e2,d1,d2)
+    stop_memory = getMemory()
+    stop_time = getTime()
+    tracemalloc.stop()
+
+    delta_time = stop_time - start_time
+    delta_memory = deltaMemory(start_memory, stop_memory)
+    return delta_time,delta_memory,requerimiento2
 def requerimiento4(diccionario,lista):
-    return model.requerimiento4(diccionario,lista)
+    delta_time = -1.0
+    delta_memory = -1.0
+
+    tracemalloc.start()
+
+    start_time = getTime()
+    start_memory = getMemory()
+    requerimiento4=model.requerimiento4(diccionario,lista)
+    stop_memory = getMemory()
+    stop_time = getTime()
+    tracemalloc.stop()
+
+    delta_time = stop_time - start_time
+    delta_memory = deltaMemory(start_memory, stop_memory)
+    return delta_time,delta_memory,requerimiento4
 # Funciones de consulta sobre el catálogo
 def events_size(diccionario):
     return model.events_size(diccionario)

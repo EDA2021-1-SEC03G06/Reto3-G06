@@ -63,7 +63,8 @@ while True:
         
     elif int(inputs[0]) == 2:
         print("Cargando información en el catalogo.............")
-        controller.loadData(diccionario)
+        tiempo_memoria=controller.loadData(diccionario)
+        
         print("datos cargados correctamente")
 
         for i in range(1,6):
@@ -76,26 +77,34 @@ while True:
         print("Se han cargado un total de : ", controller.events_size(diccionario), " eventos de escucha")
         print(" Total de Autores : ", controller.artists_size(diccionario))
         print(" Total de canciones: ", controller.songs_size(diccionario))
+        print("Tiempo de carga: ",tiempo_memoria[0]," ms")
+        print("Memoria usada: ",tiempo_memoria[1])
     elif int(inputs[0])==3:
         caracteristica=input("indique la caracteristica de contenido")
         minm=(input("Indique el valor minimo"))
         maxm=(input("Indique el valor maximo"))
-        lista=controller.requerimiento1(diccionario,caracteristica,minm,maxm)
+        datos=controller.requerimiento1(diccionario,caracteristica,minm,maxm)
+        lista=datos[2]
         print("Cantidad total de eventos de escucha : " ,  lista[0])
         print("Cantidad total de artistas: " ,lista[1])
+        print("Tiempo gastado: " ,datos[0]," ms")
+        print("Memoria usada: ",datos[1]," mb")
+
     elif int(inputs[0])==4:
         e1=float(input("Escriba el rango minimo para energía: "))
         e2=float(input("Escriba el rango maximo para energía: "))
         d1=float(input("Escriba el rango minimo para danceabilidad: "))
         d2=float(input("Escriba el rango maximo para danceabilidad: "))
-        lista=controller.requerimiento2(diccionario,e1,e2,d1,d2)
+        datos=controller.requerimiento2(diccionario,e1,e2,d1,d2)
+        lista=datos[2]
         print(" La cantidad de canciones que cumnplene estas condiciones son : " ,lista[0])    
 
         for i in range(1,6):
             numero=random.randint(1,lt.size(lista[1]))
             evento=lt.getElement(lista[1],numero)
             print("Track",i," : ",evento['artist_id'], " with energy ", evento['energy']," and danceability : ", evento['danceability'] )
-
+        print("Tiempo gastado: " ,datos[0]," ms")
+        print("Memoria usada: ",datos[1]," mb")
         
     elif int(inputs[0])==5:
        pass
@@ -115,8 +124,8 @@ while True:
                 salida.append(lista[p-1])
         print("Cargando")
                 
-        variables=controller.requerimiento4(diccionario,salida)
-
+        tiempo_memoria_datos=controller.requerimiento4(diccionario,salida)
+        variables=tiempo_memoria_datos[2]
         size=len(salida)
 
         for i in range(size):
@@ -126,8 +135,9 @@ while True:
             tamaño_lista=lt.size(lista)
             for j in range(1,11):
                 numero=random.randint(1,tamaño_lista)
-                print("Artist",j," : ", lt.getElement(lista,numero)['artist_id'])
-        
+                print("Artist",j," : ", lt.getElement(lista,numero))
+        print("Tiempo gastado: ",tiempo_memoria_datos[0]," ms")
+        print("Memoria gastada: ",tiempo_memoria_datos[1]," mb")
     else:
         sys.exit(0)
 sys.exit(0)

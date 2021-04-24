@@ -234,39 +234,48 @@ def requerimiento1(diccionario,feature,minm,maxm):
     maxm=float(maxm)
     feature=feature.lower()
     diccionario[feature]=om.newMap(omaptype='RBT',comparefunction=compareByFeature) #creación RBT
+    artistas=om.newMap(omaptype='RBT',comparefunction=compareByArtistid)#creación rbt artistas
+
     iterador=li.newIterator(diccionario['audio-events'])
     while li.hasNext(iterador):
         event=li.next(iterador)
         id=float(event[feature])
+
         
         p=om.contains(diccionario[feature],id)          #se verifica si el rbt contiene el valor de la caracteristica correspondiente
+        
         if not p:                                           #si no lo tiene, se crea un nodo con llave el valor de esa caracteristica
             lista=lt.newList(datastructure='ARRAY_LIST')    # y su valor una lista con el evento correspondiente
             lt.addLast(lista,event)
+        
         else:
             couple=om.get(diccionario[feature],id)              # si ya lo contiene, se agrega a la lista, el evento correspondiente
             lista=me.getValue(couple)
             lt.addLast(lista,event)
+        
         om.put(diccionario[feature],id,lista)
+
 
     values=om.values(diccionario[feature],minm,maxm)
     total=0
 
-    artistas=lt.newList(datastructure='ARRAY_LISTS')
-    for lista in lt.iterator(values):                   
-        total+=lt.size(lista)                       #se cuenta el tamaño de la lista de cada nodo
-        for evento in lt.iterator(lista):
-            lt.addLast(artistas,evento)        #se añade a una lista los artistas de cada uno de los eventos
-    
-    artistas_ordenados=ms.sort(artistas,compareByArtistidBinary)        #estos artistas son ordenados, de tal manera que los mismos artistas queden consecutivos
-    
-    artistas_final=lt.newList(datastructure='ARRAY_LIST')
-    lt.addLast(artistas_final,lt.firstElement(artistas_ordenados))
 
-    for evento in lt.iterator(artistas_ordenados):      #el bucle sirve para añadir a una nueva lista cada uno de los artistas a lo sumo una vez
-        if evento['artist_id']!=lt.lastElement(artistas_final)['artist_id']:
-            lt.addLast(artistas_final,evento)
-    size=lt.size(artistas_final)
+    for lista in lt.iterator(values):                   
+        total+=lt.size(lista)                    #se cuenta el tamaño de la lista de cada nodo
+        for events in lt.iterator(lista):
+            artist_id=events["artist_id"]
+            r=om.contains(artistas,artist_id)
+            if not r:
+                lista2=lt.newList(datastructure='ARRAY_LIST')
+                lt.addLast(lista2,events)
+            else:
+                couple2=om.get(artistas,artist_id)
+                lista2=me.getValue(couple2)
+                lt.addLast(lista2,events)
+
+            om.put(artistas,artist_id,lista2)
+
+    size=om.size(artistas)
 
     return total,size
 
@@ -314,7 +323,7 @@ def requerimiento4(diccionario,lista):
     total=lt.newList(datastructure='ARRAY_LIST')
     numeroartistas=lt.newList(datastructure='ARRAY_LIST')
     lista_artistas=lt.newList(datastructure='ARRAY_LIST')
-
+    artistas=om.newMap(omaptype='RBT',comparefunction=compareByArtistid)
     for categorias in lista:
         couple=mp.get(diccionario['tempo'], categorias)         #Se obtiene la tabla de hash cuyo 
         categoria=me.getValue(couple)
@@ -324,17 +333,23 @@ def requerimiento4(diccionario,lista):
         size=lt.size(eventos)
         lt.addLast(total,size)
 
-        artistas_ordenados=ms.sort(eventos,compareByArtistidBinary)        #estos artistas son ordenados, de tal manera que los mismos artistas queden consecutivos
-    
-        artistas_final=lt.newList(datastructure='ARRAY_LIST')
-        lt.addLast(artistas_final,lt.firstElement(artistas_ordenados))
+        for evento in lt.iterator(eventos):
+            id=evento['artist_id']
+            p=om.contains(artistas,id)
 
-        for evento in lt.iterator(artistas_ordenados):      #el bucle sirve para añadir a una nueva lista cada uno de los artistas a lo sumo una vez
-            if evento['artist_id']!=lt.lastElement(artistas_final)['artist_id']:
-                lt.addLast(artistas_final,evento)
-        size=lt.size(artistas_final)
-        lt.addLast(numeroartistas,size)
-        lt.addLast(lista_artistas,artistas_final)
-        
+            if not p:
+                lista2=lt.newList(datastructure='ARRAY_LIST')
+                lt.addLast(lista2,evento)
+            else:
+                couple2=om.get(artistas,id)
+                lista2=me.getValue(couple2)
+                lt.addLast(lista2,evento)
+            om.put(artistas,id,lista2)
+            
+        size_artists=om.size(artistas)
+        ids_list=om.keySet(artistas)
+        lt.addLast(numeroartistas,size_artists)
+        lt.addLast(lista_artistas,ids_list)
+
     return total,numeroartistas,lista_artistas
     
