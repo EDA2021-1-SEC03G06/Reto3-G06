@@ -50,20 +50,25 @@ def initialize():
         'danceability':None,
         'tempo':None
     }
-    diccionario["audio-events"]=lt.newList("ARRAY_LIST")
-    diccionario["artists"]=om.newMap(omaptype='RBT',comparefunction=compareByArtistid)
-    diccionario["songs"]=om.newMap(omaptype='RBT',comparefunction=compareBySongId)
+    diccionario["audio-events"]=mp.newMap(maptype='PROBING',numelements=60000,loadfactor=0.5)
+    diccionario["artists"]=mp.newMap(maptype='PROBING',numelements=11000,loadfactor=0.5)
+    diccionario["songs"]=mp.newMap(maptype='CHAINING',numelements=31000,loadfactor=2.0)
     diccionario['user-events']=lt.newList('ARRAY_LIST')
     diccionario['energy']=om.newMap(omaptype='RBT',comparefunction=compareByFeature)
     diccionario['danceability']=om.newMap(omaptype='RBT',comparefunction=compareByFeature)
-    diccionario['tempo']=mp.newMap(numelements=10,maptype='CHAINING',loadfactor=1.0)
+    diccionario["tempo"]=om.newMap(omaptype='RBT',comparefunction=compareByFeature)
+    diccionario["tempo-artists"]=om.newMap(omaptype='RBT',comparefunction=compareByFeature)
     
-    create_tempo(diccionario)
+
+    
+    
+    #create_tempo(diccionario)
     return diccionario
 
 # Funciones para agregar informacion al catalogo
 def add_audio_event(diccionario,audio_event):
-    lt.addLast(diccionario["audio-events"],audio_event)
+    key=audio_event["user_id"]+audio_event["track_id"]+audio_event["created_at"]
+    mp.put(diccionario["audio-events"],key,audio_event)
     update_artist(diccionario,audio_event)
     update_song(diccionario,audio_event)
     update_danceability(diccionario,audio_event)
@@ -73,49 +78,20 @@ def add_audio_event(diccionario,audio_event):
 def add_user_event(diccionario,audio_event):
     lt.addLast(diccionario['user-events'],audio_event)
 # Funciones para creacion de datos
-def create_tempo(diccionario):
     
-    mp.put(diccionario['tempo'],'reggae',create_category(60,90))
-    mp.put(diccionario['tempo'],'down-tempo',create_category(70,100))
-    mp.put(diccionario['tempo'],'chill-out',create_category(90,120))
-    mp.put(diccionario['tempo'],'hip-hop',create_category(85,115))
-    mp.put(diccionario['tempo'],'jazz and funk',create_category(120,125))
-    mp.put(diccionario['tempo'],'pop',create_category(100,130))
-    mp.put(diccionario['tempo'],'r&b',create_category(60,80))
-    mp.put(diccionario['tempo'],'rock',create_category(110,140))
-    mp.put(diccionario['tempo'],'metal',create_category(100,160))
-   
-    
-def create_category(min,max):
-    diccionario=mp.newMap(2,maptype='CHAINING',loadfactor=1.0)
-    lista=lt.newList(datastructure='ARRAY_LIST')
-    listrango=lt.newList(datastructure='ARRAY_LIST')
 
-    lt.addFirst(listrango,min)
-    lt.addLast(listrango,max)
-
-    mp.put(diccionario,'events',lista)
-    mp.put(diccionario,'range',listrango)
-
-    return diccionario
 
 
 
 def update_artist(diccionario,audio_event):
-    id=audio_event['artist_id']
-    p=om.contains(diccionario['artists'],id)
-    if not p:
-        create_artist(diccionario,audio_event) 
-    else:
-        insert_event(diccionario,audio_event)
+    id=audio_event["artist_id"]
+    mp.put(diccionario["artists"],id,audio_event)
+  
+
 
 def update_song(diccionario,audio_event):
     id=audio_event['track_id']
-    p=om.contains(diccionario['songs'],id)
-    if not p:
-        create_song(diccionario,audio_event)
-    else:
-        insert_song(diccionario,audio_event)
+    mp.put(diccionario["songs"],id,audio_event)
 def update_danceability(diccionario,audio_event):
     id=audio_event['danceability']
     p=om.contains(diccionario['danceability'],id)
@@ -124,10 +100,8 @@ def update_danceability(diccionario,audio_event):
     else:
         insert_danceability(diccionario,audio_event)
 def create_artist(diccionario,audio_event):
-    lista=lt.newList(datastructure='ARRAY_LIST')
-    lt.addLast(lista,audio_event)
-    om.put(diccionario['artists'],audio_event['artist_id'],lista)
-
+    om.put(diccionario['artists'],audio_event['artist_id'],audio_event)
+"""
 def insert_event(diccionario,audio_event):
     couple=om.get(diccionario['artists'],audio_event['artist_id'])
     lista=me.getValue(couple)
@@ -144,7 +118,7 @@ def insert_song(diccionario,audio_event):
     lista=me.getValue(couple)
     lt.addLast(lista,audio_event)
     om.put(diccionario['songs'],audio_event['track_id'],lista)
-
+"""
 def create_danceability(diccionario,audio_event):
     lista=lt.newList(datastructure='ARRAY_LIST')
     lt.addLast(lista,audio_event)
@@ -156,44 +130,45 @@ def insert_danceability(diccionario,audio_event):
     lt.addLast(lista,audio_event)
     om.put(diccionario['danceability'],audio_event['danceability'],lista)
 def update_tempo(diccionario,audio_event):
-    lista=mp.keySet(diccionario['tempo'])
+    
+    
+    id=float(audio_event["tempo"])
+    unique_id=audio_event["user_id"]+audio_event["track_id"]+audio_event["created_at"]
+    artist_id=audio_event["artist_id"]
 
-    for feature in lt.iterator(lista):
-        couple=mp.get(diccionario['tempo'],feature)
-        p=me.getValue(couple)
 
-        couple2=mp.get(p,'range')
-        values=me.getValue(couple2)
 
-        couple3=mp.get(p,'events')
-        lista=me.getValue(couple3)
-
-        minimo=lt.firstElement(values)
-        maximo=lt.lastElement(values)
-        if minimo<=float(audio_event['tempo'])<=maximo:
-            lt.addLast(lista,audio_event)
+    contains=om.contains(diccionario["tempo"],id)
+    if not contains:
+        values=mp.newMap(maptype="PROBING",numelements=50,loadfactor=0.5)
+        values_artists=mp.newMap(maptype='PROBING',numelements=20,loadfactor=0.5)
+       
         
-        mp.put(p,'events',lista)
-        mp.put(diccionario['tempo'],feature,p)
-"""
-def create_danceability(diccionario,audio_event):
-    lista=lt.newList(datastructure='ARRAY_LIST')
-    lt.addLast(lista,audio_event)
-    om.put(diccionario['danceability'],audio_event['danceability'],lista)
+    else:
+        couple=om.get(diccionario["tempo"],id)
+        values=me.getValue(couple)
 
-def insert_danceability(diccionario,audio_event):
-    couple=om.get(diccionario['danceability'],audio_event['danceability'])
-    lista=me.getValue(couple)
-    lt.addLast(lista,audio_event)
-    om.put(diccionario['danceability'],audio_event['danceability'],lista)
-"""
+        couple2=om.get(diccionario["tempo-artists"],id)
+        values_artists=me.getValue(couple2)
+
+
+    mp.put(values_artists,artist_id,audio_event)
+    mp.put(values,unique_id,audio_event)
+
+    om.put(diccionario["tempo"],id,values)
+    om.put(diccionario["tempo-artists"],id,values_artists)
+    
+
+   
+
+
 # Funciones de consulta
 def events_size(diccionario):
-    return lt.size(diccionario['audio-events'])
+    return mp.size(diccionario['audio-events'])
 def artists_size(diccionario):
-    return om.size(diccionario['artists'])
+    return mp.size(diccionario['artists'])
 def songs_size(diccionario):
-    return om.size(diccionario['songs']) 
+    return mp.size(diccionario['songs']) 
 # Funciones utilizadas para comparar elementos dentro de una lista
 def compareSongIdBinary(song1,song2):
     return song1['track_id']>song2['track_id']
@@ -233,15 +208,29 @@ def requerimiento1(diccionario,feature,minm,maxm):
     minm=float(minm)
     maxm=float(maxm)
     feature=feature.lower()
+    iterador=mp.valueSet(diccionario['audio-events'])
+    lista=lt.newList("ARRAY_LIST")
+    artists=mp.newMap(maptype='PROBING',loadfactor=0.5,numelements=4000)
+    
+    
+    for event in lt.iterator(iterador):
+        if minm<=float(event[feature])<=maxm:
+            lt.addLast(lista,event)
+            mp.put(artists,event["artist_id"],event)
+    size=lt.size(lista)
+    artists_size=mp.size(artists)
+            
+            
+    """
     diccionario[feature]=om.newMap(omaptype='RBT',comparefunction=compareByFeature) #creación RBT
     artistas=om.newMap(omaptype='RBT',comparefunction=compareByArtistid)#creación rbt artistas
 
-    iterador=li.newIterator(diccionario['audio-events'])
-    while li.hasNext(iterador):
-        event=li.next(iterador)
+                   #Forma alternativa con RBT
+    print(1)
+    
+    for event in lt.iterator(iterador):
         id=float(event[feature])
 
-        
         p=om.contains(diccionario[feature],id)          #se verifica si el rbt contiene el valor de la caracteristica correspondiente
         
         if not p:                                           #si no lo tiene, se crea un nodo con llave el valor de esa caracteristica
@@ -252,32 +241,32 @@ def requerimiento1(diccionario,feature,minm,maxm):
             couple=om.get(diccionario[feature],id)              # si ya lo contiene, se agrega a la lista, el evento correspondiente
             lista=me.getValue(couple)
             lt.addLast(lista,event)
-        
         om.put(diccionario[feature],id,lista)
-
-
-    values=om.values(diccionario[feature],minm,maxm)
-    total=0
-
-
-    for lista in lt.iterator(values):                   
-        total+=lt.size(lista)                    #se cuenta el tamaño de la lista de cada nodo
-        for events in lt.iterator(lista):
-            artist_id=events["artist_id"]
+        
+        if minm<=float(event[feature])<=maxm:
+            artist_id=event["artist_id"]
             r=om.contains(artistas,artist_id)
             if not r:
                 lista2=lt.newList(datastructure='ARRAY_LIST')
-                lt.addLast(lista2,events)
+                lt.addLast(lista2,event)
             else:
                 couple2=om.get(artistas,artist_id)
                 lista2=me.getValue(couple2)
-                lt.addLast(lista2,events)
+                lt.addLast(lista2,event)
 
             om.put(artistas,artist_id,lista2)
+    
+        
+    values=om.values(diccionario[feature],minm,maxm)
+    total=0
+
+    for lista in lt.iterator(values):                   
+        total+=lt.size(lista)                    #se cuenta el tamaño de la lista de cada nodo
+        
 
     size=om.size(artistas)
-
-    return total,size
+    """
+    return size,artists_size
 
 
 def requerimiento2(diccionario,mine,maxe,mind,maxd):
@@ -318,38 +307,97 @@ def requerimiento2(diccionario,mine,maxe,mind,maxd):
     size=lt.size(lista_final)
     return size, lista_final
 
+def crear_generos():
 
-def requerimiento4(diccionario,lista):
+    generos=mp.newMap(maptype='PROBING',numelements=9,loadfactor=0.5)
+    lista=lt.newList()
+    lt.addLast(lista,60)
+    lt.addLast(lista,90)
+    mp.put(generos,"reggae",lista)
+    lista=lt.newList()
+    lt.addLast(lista,70)
+    lt.addLast(lista,100)
+    mp.put(generos,"down-tempo",lista)
+    lista=lt.newList()
+    lt.addLast(lista,90)
+    lt.addLast(lista,120)
+    mp.put(generos,"chill-out",lista)
+    lista=lt.newList()
+    lt.addLast(lista,85)
+    lt.addLast(lista,115)
+    mp.put(generos,"hip-hop",lista)
+    lista=lt.newList()
+    lt.addLast(lista,120)
+    lt.addLast(lista,125)
+    mp.put(generos,"jazz and funk",lista)
+    lista=lt.newList()
+    lt.addLast(lista,100)
+    lt.addLast(lista,130)
+    mp.put(generos,"pop",lista)
+    lista=lt.newList()
+    lt.addLast(lista,60)
+    lt.addLast(lista,80)
+    mp.put(generos,"r&b",lista)
+    lista=lt.newList()
+    lt.addLast(lista,110)
+    lt.addLast(lista,140)
+    mp.put(generos,"rock",lista)
+    lista=lt.newList()
+    lt.addLast(lista,100)
+    lt.addLast(lista,160)
+    mp.put(generos,"metal",lista)
+  
+    return generos
+def requerimiento4(diccionario,lista,nuevo):
+    
+    
+    generos=crear_generos()
+
     total=lt.newList(datastructure='ARRAY_LIST')
     numeroartistas=lt.newList(datastructure='ARRAY_LIST')
     lista_artistas=lt.newList(datastructure='ARRAY_LIST')
-    artistas=om.newMap(omaptype='RBT',comparefunction=compareByArtistid)
-    for categorias in lista:
-        couple=mp.get(diccionario['tempo'], categorias)         #Se obtiene la tabla de hash cuyo 
-        categoria=me.getValue(couple)
+
+
+
+    if lt.firstElement(nuevo)==True:
+        rango=lt.newList()
+        lt.addLast(rango,lt.getElement(nuevo,2))
+        lt.addLast(rango,lt.getElement(nuevo,3))
+        mp.put(generos,lt.lastElement(lista),rango)
+    for categorias in lt.iterator(lista):
         
-        couple2=mp.get(categoria,'events')
-        eventos=me.getValue(couple2)
-        size=lt.size(eventos)
+        values=diccionario["tempo"]
+        
+        
+        couple=mp.get(generos,categorias)
+        lista=me.getValue(couple)
+        minm=lt.firstElement(lista)
+        maxm=lt.lastElement(lista)
+
+        range_events=om.values(values,minm,maxm)
+        range_artists=om.values(diccionario["tempo-artists"],minm,maxm)
+
+        size=0
+        size_artists=0
+        
+        artists_map=mp.newMap(maptype="PROBING",numelements=100,loadfactor=0.5)
+        for events in lt.iterator(range_events):
+            size+=mp.size(events)
+
+        for artists in lt.iterator(range_artists):
+            lista=mp.keySet(artists)
+            for artist in lt.iterator(lista):
+                mp.put(artists_map,artist,artist)
+
+        size_artists=mp.size(artists_map)
+
+        
         lt.addLast(total,size)
-
-        for evento in lt.iterator(eventos):
-            id=evento['artist_id']
-            p=om.contains(artistas,id)
-
-            if not p:
-                lista2=lt.newList(datastructure='ARRAY_LIST')
-                lt.addLast(lista2,evento)
-            else:
-                couple2=om.get(artistas,id)
-                lista2=me.getValue(couple2)
-                lt.addLast(lista2,evento)
-            om.put(artistas,id,lista2)
-            
-        size_artists=om.size(artistas)
-        ids_list=om.keySet(artistas)
         lt.addLast(numeroartistas,size_artists)
-        lt.addLast(lista_artistas,ids_list)
+        lt.addLast(lista_artistas,mp.keySet(artists_map))
 
     return total,numeroartistas,lista_artistas
-    
+
+
+def requerimiento5():
+    pass

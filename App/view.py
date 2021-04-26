@@ -24,6 +24,7 @@ import config as cf
 import sys
 import controller
 from DISClib.ADT import list as lt
+from DISClib.ADT import map as mp
 import random
 assert cf
 def printMenu():
@@ -66,13 +67,13 @@ while True:
         tiempo_memoria=controller.loadData(diccionario)
         
         print("datos cargados correctamente")
-
+        valores=mp.valueSet(diccionario["audio-events"])
         for i in range(1,6):
-            video=lt.getElement(diccionario['audio-events'],i)
+            video=lt.getElement(mp.valueSet(diccionario['audio-events']),i)
             print(i," : ",video)
         size=lt.size(diccionario['audio-events'])
         for i in range(size-5,size+1):
-            video=lt.getElement(diccionario['audio-events'],i)
+            video=lt.getElement(mp.valueSet(diccionario['audio-events']),i)
             print(i," :" ,video)
         print("Se han cargado un total de : ", controller.events_size(diccionario), " eventos de escucha")
         print(" Total de Autores : ", controller.artists_size(diccionario))
@@ -104,7 +105,7 @@ while True:
             evento=lt.getElement(lista[1],numero)
             print("Track",i," : ",evento['artist_id'], " with energy ", evento['energy']," and danceability : ", evento['danceability'] )
         print("Tiempo gastado: " ,datos[0]," ms")
-        print("Memoria usada: ",datos[1]," mb")
+        print("Memoria usada: ",datos[1]," kb")
         
     elif int(inputs[0])==5:
        pass
@@ -112,7 +113,19 @@ while True:
             
     elif int(inputs[0])==6:
         lista=["reggae","down-tempo","chill-out","hip-hop","jazz and funk","pop","r&b","rock","metal"]
-        salida=[]
+        salida=lt.newList(datastructure="ARRAY_LIST")
+        categorias=lt.newList(datastructure="ARRAY_LIST")
+
+        nuevo=int(input("¿Desea agregar una nueva categoria?.. Digite 1 si lo desea, 0 de lo contrario..."))
+        if nuevo==1:
+            nombre=input("Escriba el nombre ed la nueva categoria: ")
+            min=int(input("Escriba el rango minimo: "))
+            max=int(input("Escriba el rango maximo: "))
+            lt.addFirst(salida,True)
+            lt.addLast(salida,min)
+            lt.addLast(salida,max)
+        else:
+            lt.addLast(salida,False)
         print("De cual de las siguientes categorias quiere conocer la cantidad reproducciones : ")
         bandera=True
         while bandera:
@@ -121,23 +134,27 @@ while True:
             if p==10:
                 bandera=False
             elif p<10:
-                salida.append(lista[p-1])
+                lt.addLast(categorias,lista[p-1])
+                
+        if nuevo:
+            lt.addLast(categorias,nombre)
         print("Cargando")
                 
-        tiempo_memoria_datos=controller.requerimiento4(diccionario,salida)
+        tiempo_memoria_datos=controller.requerimiento4(diccionario,categorias,salida)
         variables=tiempo_memoria_datos[2]
-        size=len(salida)
+        size=lt.size(categorias)
 
         for i in range(size):
-            print(" Para la categoria  ", salida[i], " se obtuvieron: ", lt.getElement(variables[0],i+1), "reproducciones ")
+            print(" Para la categoria  ", lt.getElement(categorias,i+1), " se obtuvieron: ", lt.getElement(variables[0],i+1), "reproducciones ")
             print(" Con ",lt.getElement(variables[1],i+1)," artistas")
             lista=lt.getElement(variables[2],i+1)
             tamaño_lista=lt.size(lista)
             for j in range(1,11):
                 numero=random.randint(1,tamaño_lista)
+                
                 print("Artist",j," : ", lt.getElement(lista,numero))
         print("Tiempo gastado: ",tiempo_memoria_datos[0]," ms")
-        print("Memoria gastada: ",tiempo_memoria_datos[1]," mb")
+        print("Memoria gastada: ",tiempo_memoria_datos[1]," kb")
     else:
         sys.exit(0)
 sys.exit(0)

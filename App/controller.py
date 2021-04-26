@@ -135,7 +135,7 @@ def requerimiento2(diccionario,e1,e2,d1,d2):
     delta_time = stop_time - start_time
     delta_memory = deltaMemory(start_memory, stop_memory)
     return delta_time,delta_memory,requerimiento2
-def requerimiento4(diccionario,lista):
+def requerimiento4(diccionario,lista,nuevo):
     delta_time = -1.0
     delta_memory = -1.0
 
@@ -143,7 +143,7 @@ def requerimiento4(diccionario,lista):
 
     start_time = getTime()
     start_memory = getMemory()
-    requerimiento4=model.requerimiento4(diccionario,lista)
+    requerimiento4=model.requerimiento4(diccionario,lista,nuevo)
     stop_memory = getMemory()
     stop_time = getTime()
     tracemalloc.stop()
